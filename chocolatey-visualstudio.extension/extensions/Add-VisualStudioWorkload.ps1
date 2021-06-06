@@ -7,10 +7,11 @@
         [Parameter(Mandatory = $true)] [string] $VisualStudioYear,
         [Parameter(Mandatory = $true)] [string[]] $ApplicableProducts,
         [switch] $IncludeRecommendedComponentsByDefault,
+        [switch] $IncludeOptionalComponentsByDefault,
         [version] $RequiredProductVersion,
         [bool] $Preview
     )
-    if ($Env:ChocolateyPackageDebug -ne $null)
+    if ($null -ne $Env:ChocolateyPackageDebug)
     {
         $VerbosePreference = 'Continue'
         $DebugPreference = 'Continue'
@@ -22,6 +23,10 @@
     if ($IncludeRecommendedComponentsByDefault)
     {
         $argumentList += @('includeRecommended', '')
+    }
+    if ($IncludeOptionalComponentsByDefault)
+    {
+        $argumentList += @('includeOptional', '')
     }
 
     $channelReference = Get-VSChannelReference -VisualStudioYear $VisualStudioYear -Preview $Preview

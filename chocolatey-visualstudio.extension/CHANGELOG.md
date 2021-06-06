@@ -1,5 +1,17 @@
 ﻿# CHANGELOG
 
+## Version 1.10.0
+- During an update operation, if the package author did not provide DesiredProductVersion, the version is automatically determined from the channel manifest. This lights up two features:
+  - The update process is short-circuited if the installed product version is already DesiredProductVersion or higher.
+  - After the update, the installed product version is checked to determine if the update actually happened. This makes it possible to detect a bug in the Visual Studio installer, which sometimes fails to download the channel manifest and thinks no update is needed.
+- Fixed installed products detection being invoked twice by mistake.
+- Updated workaround for the bootstrapper ignoring --wait when updating the VS Installer to account for a new process used by the VS Installer in 16.9+ (GH-7, GH-97).
+
+## Version 1.9.0
+- Added custom handling for '--installCatalogUri' to better support installations from layout without '--noWeb' ([GH-65](https://github.com/jberezanski/ChocolateyPackages/pull/65)).
+- New switch for Add-VisualStudioWorkload: -IncludeOptionalComponentsByDefault ([GH-92](https://github.com/jberezanski/ChocolateyPackages/pull/92)).
+- Fixed support for Visual Studio 2019 16.9 installer, which is no longer based on Electron.
+
 ## Version 1.8.1
 
 - The VSSetup PowerShell module, if present, is used to detect VS instances ((GH-9)[https://github.com/jberezanski/ChocolateyPackages/issues/9]). This protects against future failures due to changes in the (undocumented) VS instance info storage format. On PowerShell 5+ (also 3 and 4 with the PackageManagement Preview module installed) this module can be installed using `Install-Module -Name VSSetup`.

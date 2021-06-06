@@ -20,14 +20,14 @@
     )
     Write-Debug "Running 'Start-VSModifyOperation' with PackageName:'$PackageName' ArgumentList:'$ArgumentList' ChannelReference:'$ChannelReference' ApplicableProducts:'$ApplicableProducts' OperationTexts:'$OperationTexts' Operation:'$Operation' RequiredProductVersion:'$RequiredProductVersion' BootstrapperUrl:'$BootstrapperUrl' BootstrapperChecksum:'$BootstrapperChecksum' BootstrapperChecksumType:'$BootstrapperChecksumType' ProductReference:'$ProductReference' UseBootstrapper:'$UseBootstrapper'";
 
-    if ($ProductReference -eq $null -and $Operation -eq 'update')
+    if ($null -eq $ProductReference -and $Operation -eq 'update')
     {
         throw 'ProductReference is mandatory for update operations.'
     }
 
     $frobbed, $frobbing, $frobbage = $OperationTexts
 
-    if ($PackageParameters -eq $null)
+    if ($null -eq $PackageParameters)
     {
         $PackageParameters = Parse-Parameters $env:chocolateyPackageParameters
     }
@@ -90,7 +90,7 @@
                     Write-Warning "Product at path '$($productInfo.installationPath)' has channel id '$($productInfo.channelId)', expected '$($ChannelReference.ChannelId)'."
                 }
 
-                if ($ProductReference -ne $null -and $productInfo.productId -ne $ProductReference.ProductId)
+                if ($null -ne $ProductReference -and $productInfo.productId -ne $ProductReference.ProductId)
                 {
                     Write-Warning "Product at path '$($productInfo.installationPath)' has product id '$($productInfo.productId)', expected '$($ProductReference.ProductId)'."
                 }
@@ -210,7 +210,7 @@
             }
 
             $existingProductVersion = [version]$productInfo.installationVersion
-            if ($RequiredProductVersion -ne $null)
+            if ($null -ne $RequiredProductVersion)
             {
                 if ($existingProductVersion -lt $RequiredProductVersion)
                 {
@@ -222,16 +222,34 @@
                 }
             }
 
-            if ($Operation -eq 'update' -and $DesiredProductVersion -ne $null)
+            if ($Operation -eq 'update')
             {
-                if ($DesiredProductVersion -le $existingProductVersion)
+                if ($null -eq $DesiredProductVersion)
                 {
-                    Write-Verbose ('Product at path ''{0}'' will not be updated because its version ({1}) is greater than or equal to the desired version of {2}.' -f $productInfo.installationPath, $existingProductVersion, $DesiredProductVersion)
-                    continue
+                    $firstProductId = $thisProductIds | Select-Object -First 1
+                    Write-Verbose "DesiredProductVersion is not set, trying to obtain it from the channel manifest using product id $firstProductId"
+                    $DesiredProductVersion = Get-VSProductVersionFromChannelManifest -ProductId $firstProductId -PackageParameters $PackageParameters -ChannelReference $ChannelReference
+                    if ($null -ne $DesiredProductVersion)
+                    {
+                        Write-Verbose "Determined DesiredProductVersion from the channel manifest: $DesiredProductVersion"
+                    }
+                    else
+                    {
+                        Write-Verbose "Unable to determine DesiredProductVersion from the channel manifest. The script will not be able to determine the need for the update and to verify the update executed successfully."
+                    }
                 }
-                else
+
+                if ($null -ne $DesiredProductVersion)
                 {
-                    Write-Debug ('Product at path ''{0}'' will be updated because its version ({1}) is lower than the desired version of {2}.' -f $productInfo.installationPath, $existingProductVersion, $DesiredProductVersion)
+                    if ($DesiredProductVersion -le $existingProductVersion)
+                    {
+                        Write-Verbose ('Product at path ''{0}'' will not be updated because its version ({1}) is greater than or equal to the desired version of {2}.' -f $productInfo.installationPath, $existingProductVersion, $DesiredProductVersion)
+                        continue
+                    }
+                    else
+                    {
+                        Write-Debug ('Product at path ''{0}'' will be updated because its version ({1}) is lower than the desired version of {2}.' -f $productInfo.installationPath, $existingProductVersion, $DesiredProductVersion)
+                    }
                 }
             }
 
@@ -297,16 +315,16 @@
         }
 
         $thisChannelReference = $ChannelReference
-        if ($thisProductReference -ne $null)
+        if ($null -ne $thisProductReference)
         {
             $thisChannelReference = Convert-VSProductReferenceToChannelReference -ProductReference $thisProductReference
         }
 
         $shouldFixInstaller = $false
-        if ($installer -eq $null)
+        if ($null -eq $installer)
         {
             $installer = Get-VisualStudioInstaller
-            if ($installer -eq $null)
+            if ($null -eq $installer)
             {
                 $shouldFixInstaller = $true
             }
@@ -341,7 +359,7 @@
 
         if (-not $UseBootstrapper)
         {
-            if ($installer -eq $null)
+            if ($null -eq $installer)
             {
                 throw 'The Visual Studio Installer is not present. Unable to continue.'
             }
@@ -366,7 +384,7 @@
         # if updating/modifying from layout, auto add --layoutPath (VS Installer) or --installLayoutPath (VS Bootstrapper)
         if (-not $argumentSet.ContainsKey($layoutPathArgumentName))
         {
-            if ($layoutPath -ne $null)
+            if ($null -ne $layoutPath)
             {
                 Write-Debug "Using layout path: $layoutPath"
                 $argumentSet[$layoutPathArgumentName] = $layoutPath
@@ -418,7 +436,7 @@
             if ($instanceCount -eq 1)
             {
                 $currentProductVersion = [version]$instance.installationVersion
-                if ($DesiredProductVersion -ne $null)
+                if ($null -ne $DesiredProductVersion)
                 {
                     if ($currentProductVersion -ge $DesiredProductVersion)
                     {
